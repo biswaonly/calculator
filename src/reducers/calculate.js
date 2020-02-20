@@ -1,171 +1,117 @@
 import {
   NUMERIC_DIGITS,
   MANEGE_OPERATORS,
-  SHOW_RESULT,
   FLOAT_VALUE_CREATE,
   CHANGE_TO_POS_NEG,
-  NUMERIC_DIGIT_ZERO,
   CLEAR_COMPLETELY,
-  BACKSPACE_PRESSED
+  PERCENTAGE_MODULE
 } from "../actions/types";
 
 const initialState = {
-  typedEquation: "",
-  resValue: "",
-  evalTrigger: false
+  currentDigit: "",
+  stack: [],
+  previousDigit: ""
 };
 
-// Get Last Non Integer
-const getLastNonInteger = str => {
-  let re = /[0-9]/g;
-  let i = str.length - 1;
-  while (i >= 0) {
-    if (str[i].match(re) === null) {
-      return Object.assign(
-        {},
-        { symbol: str[i] },
-        { index: i },
-        { preNum: str[i - 1] },
-        { postNum: str[i + 1] }
-      );
-    }
-    i--;
+const postfixOperation = (ope, pv, cv) => {
+  switch (ope) {
+    case "+":
+      return parseFloat(pv) + parseFloat(cv) + "";
+    case "-":
+      return parseFloat(pv) - parseFloat(cv) + "";
+    case "*":
+      return parseFloat(pv) * parseFloat(cv) + "";
+    case "/":
+      return parseFloat(pv) / parseFloat(cv) + "";
+    default:
+      return "0";
   }
-  return Object.assign({}, { symbol: null }, { index: str.length - 1 });
-};
-
-// Result onChange
-const resValueGenerate = str => {
-  let obj = getLastNonInteger(str);
-  let eVal;
-  if (obj.index === str.length - 1) {
-    eVal = eval(str.slice(0, str.length - 1));
-  } else {
-    eVal = eval(str);
-  }
-  return eVal;
 };
 
 // REDUCER
 export default function(state = initialState, action) {
   const { type, payload } = action;
-  let o = getLastNonInteger(state.typedEquation);
-  let equation, result;
 
   switch (type) {
-    /* -----NUMERIC_DIGITS----- */
     case NUMERIC_DIGITS:
-      if (o.symbol === null && state.typedEquation == 0) {
-        equation = payload;
-      } else if (
-        o.symbol !== null &&
-        o.symbol !== "." &&
-        state.typedEquation.slice(o.index) == 0
-      ) {
-        equation = state.typedEquation.slice(0, o.index + 1) + payload;
-      } else {
-        equation = state.typedEquation + payload;
-      }
-      result = state.evalTrigger && resValueGenerate(equation);
-      return { ...state, typedEquation: equation, resValue: result };
-
-    /* -----NUMERIC_DIGIT_ZERO----- */
-    case NUMERIC_DIGIT_ZERO:
-      if (state.typedEquation.length != 0) {
-        if (o.symbol === null && state.typedEquation == 0) {
-          return { ...state };
-        }
-        if (
-          o.symbol !== null &&
-          o.symbol !== "." &&
-          state.typedEquation.slice(o.index) == 0
-        ) {
-          return { ...state };
-        }
-      }
-      equation = state.typedEquation + "0";
-      result = state.evalTrigger && resValueGenerate(equation);
-      return { ...state, typedEquation: equation, resValue: result };
-
-    /* -----MANEGE_OPERATORS----- */
-    case MANEGE_OPERATORS:
-      if (o.symbol !== null && o.index === state.typedEquation.length - 1) {
-        equation = state.typedEquation.slice(0, o.index) + payload;
-      } else {
-        equation = state.typedEquation + payload;
-      }
-      result = state.evalTrigger && resValueGenerate(equation);
       return {
         ...state,
-        typedEquation: equation,
-        evalTrigger: true,
-        resValue: result
+        currentDigit:
+          state.currentDigit === "0" ? payload : state.currentDigit + payload
       };
 
-    /* -----SHOW_RESULT----- */
-    case SHOW_RESULT:
-      return { ...state, typedEquation: state.resValue, resValue: "" };
-
-    /* -----FLOAT_VALUE_CREATE----- */
     case FLOAT_VALUE_CREATE:
-      if (o.symbol === null && o.index === -1) {
-        equation = "0." + state.typedEquation;
-      } else if (o.symbol === null) {
-        equation = state.typedEquation + ".";
-      }
-      if (o.symbol !== "." && o.index === state.typedEquation.length - 1) {
-        equation = state.typedEquation + "0.";
-      } else if (o.symbol !== ".") {
-        equation = state.typedEquation + ".";
-      } else {
-        equation = state.typedEquation;
-      }
-      result = state.evalTrigger && resValueGenerate(equation);
-      return { ...state, typedEquation: equation, resValue: result };
+      return {
+        ...state,
+        currentDigit:
+          (state.currentDigit.includes(".") && state.currentDigit) ||
+          (!state.currentDigit.includes(".") && state.currentDigit === ""
+            ? "0."
+            : state.currentDigit + ".")
+      };
 
-    /* -----CHANGE_TO_POS_NEG----- */
+    case MANEGE_OPERATORS:
+      if (state.stack.length === 0 && state.currentDigit.length !== 0) {
+        return {
+          ...state,
+          stack: [payload],
+          previousDigit: state.currentDigit,
+          currentDigit: ""
+        };
+      } else if (state.stack.length === 0 && state.currentDigit.length === 0) {
+        return {
+          ...state,
+          stack: [payload],
+          previousDigit: "0",
+          currentDigit: ""
+        };
+      } else if (state.stack.length !== 0 && state.currentDigit.length !== 0) {
+        let res = postfixOperation(
+          state.stack[0],
+          state.previousDigit,
+          state.currentDigit
+        );
+        return {
+          ...state,
+          currentDigit: "",
+          previousDigit: res,
+          stack: [payload]
+        };
+      } else if (state.stack.length !== 0 && state.currentDigit.length === 0) {
+        return { ...state, stack: [payload] };
+      }
+      return state;
+
     case CHANGE_TO_POS_NEG:
-      equation = state.typedEquation;
-      if (o.symbol === "-") {
-        if (o.index === 0) {
-          equation = state.typedEquation.slice(1);
-        } else {
-          equation =
-            state.typedEquation.slice(0, o.index) +
-            "+" +
-            state.typedEquation.slice(o.index + 1);
-        }
+      if (state.currentDigit.length === 0) {
+        // state.currentDigit = "0";
+        return {
+          ...state,
+          previousDigit: !isNaN(state.previousDigit[0])
+            ? "-" + state.previousDigit
+            : state.previousDigit.substring(1)
+        };
+      } else if (state.currentDigit !== "0") {
+        return {
+          ...state,
+          currentDigit: !isNaN(state.currentDigit[0])
+            ? "-" + state.currentDigit
+            : state.currentDigit.substring(1)
+        };
       }
-      if (o.symbol === "+") {
-        equation =
-          state.typedEquation.slice(0, o.index) +
-          "-" +
-          state.typedEquation.slice(o.index + 1);
-      }
-      if (o.symbol === "/" || o.symbol === "*") {
-        equation =
-          state.typedEquation.slice(0, o.index + 1) +
-          "-" +
-          state.typedEquation.slice(o.index + 1);
-      }
-      if (o.symbol === null && o.index === -1) {
-        equation = "-";
-      }
-      if (o.symbol === null && o.index !== -1) {
-        equation = "-" + state.typedEquation;
-      }
-      result = state.evalTrigger && resValueGenerate(equation);
-      return { ...state, typedEquation: equation, resValue: result };
-
-    /* -----CLEAR_COMPLETELY----- */
+      return state;
     case CLEAR_COMPLETELY:
-      return { ...state, typedEquation: "", resValue: "" };
+      return { currentDigit: "", stack: [], previousDigit: "" };
 
-    /* -----BACKSPACE_PRESSED----- */
-    case BACKSPACE_PRESSED:
-      equation = state.typedEquation.slice(0, state.typedEquation.length - 1);
-      result = state.evalTrigger && resValueGenerate(equation);
-      return { ...state, typedEquation: equation, resValue: result };
+    case PERCENTAGE_MODULE:
+      return {
+        ...state,
+        previousDigit: "",
+        currentDigit:
+          (state.previousDigit &&
+            (state.previousDigit * state.currentDigit) / 100) ||
+          state.currentDigit / 100
+      };
 
     default:
       return state;

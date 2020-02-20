@@ -1,23 +1,23 @@
 import React from "react";
-import PropTypes from "prop-types";
-import { InputTextField } from "../styled";
 import { connect } from "react-redux";
 
-const InputField = ({ typedEquation }) => {
+import { InputTextField } from "../styled";
+
+const InputField = ({ currentDigit, previousDigit }) => {
   return (
     <InputTextField>
-      <p>{typedEquation}</p>
+      <p>
+        {!currentDigit && previousDigit
+          ? previousDigit
+          : currentDigit || (!currentDigit && !previousDigit && "0")}
+      </p>
     </InputTextField>
   );
 };
 
-InputField.propTypes = {};
-
 const mapStateToProps = state => ({
-  typedEquation: state.calculate.typedEquation
+  currentDigit: state.calculate.currentDigit,
+  previousDigit: state.calculate.previousDigit
 });
 
-export default connect(
-  mapStateToProps,
-  {}
-)(InputField);
+export default connect(mapStateToProps)(InputField);

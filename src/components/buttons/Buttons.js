@@ -1,49 +1,60 @@
-import React from "react";
-import PropTypes from "prop-types";
-import Numbers from "./Numbers";
+import React, { useState } from "react";
+
 import {
   BtnArea,
   BtnNumbers,
   BtnOperators,
   BtnClear,
-  BtnResult
+  BtnResult,
+  BtnZeroDiv
 } from "../styled";
-import Operators from "./Operators";
-import CleanNClear from "./CleanNClear";
-import CalculateResult from "./CalculateResult";
+import BtnNumeric from "./BtnNumeric";
+import BtnOperator from "./BtnOperator";
+import BtnExecutor from "./BtnExecutor";
 
 const Buttons = () => {
-  const num = ["1", "2", "3", "4", "5", "6", "7", "8", "9"];
-  const ope = ["/", "*", "-", "+"];
-  const cle = ["CE", "C", "%"];
-  const res = ["+/-", "0", ".", "="];
+  const [isActive, setIsActive] = useState(false);
+
+  const num = ["7", "8", "9", "4", "5", "6", "1", "2", "3"];
+  const ope = ["/", "*", "-", "+", "="];
+  const exe = ["C", "+/-", "%"];
+  const flo = ["."];
+  const zro = ["0"];
 
   return (
-    <BtnArea>
+    <BtnArea onClick={() => setIsActive("")}>
       <BtnNumbers>
         {num.map(e => (
-          <Numbers ele={e} key={e} />
+          <BtnNumeric ele={e} key={e} />
         ))}
       </BtnNumbers>
       <BtnOperators>
         {ope.map(e => (
-          <Operators ele={e} key={e} />
+          <BtnOperator
+            ele={e}
+            key={e}
+            isActive={isActive}
+            setIsActive={setIsActive}
+          />
         ))}
       </BtnOperators>
       <BtnClear>
-        {cle.map(e => (
-          <CleanNClear ele={e} key={e} />
+        {exe.map(e => (
+          <BtnExecutor ele={e} key={e} />
         ))}
       </BtnClear>
       <BtnResult>
-        {res.map(e => (
-          <CalculateResult ele={e} key={e} />
+        {flo.map(e => (
+          <BtnNumeric ele={e} key={e} />
         ))}
       </BtnResult>
+      <BtnZeroDiv>
+        {zro.map(e => (
+          <BtnNumeric ele={e} key={e} />
+        ))}
+      </BtnZeroDiv>
     </BtnArea>
   );
 };
-
-Buttons.propTypes = {};
 
 export default Buttons;

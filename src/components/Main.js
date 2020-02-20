@@ -1,13 +1,13 @@
 import React from "react";
-import PropTypes from "prop-types";
-import Buttons from "./buttons/Buttons";
-import Results from "./results/Results";
-import { MainDiv } from "./styled";
 
-const Main = props => {
+import { MainDiv } from "./styled";
+import InputField from "./results/InputField";
+import Buttons from "./buttons/Buttons";
+
+const Main = () => {
   return (
     <MainDiv>
-      <Results />
+      <InputField />
       <Buttons />
     </MainDiv>
   );
